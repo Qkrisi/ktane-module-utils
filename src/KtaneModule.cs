@@ -252,7 +252,7 @@ public abstract class KtaneModule : MonoBehaviour
     /// <summary>
     /// Send a message to the Twitch chat
     /// </summary>
-    /// <param name="message">Base string</param>
+    /// <param name="message">Base message</param>
     /// <param name="args">Format arguments</param>
     protected void SendTwitchMessageFormat(string message, params object[] args) {
         SendTwitchMessage(String.Format(message, args));
