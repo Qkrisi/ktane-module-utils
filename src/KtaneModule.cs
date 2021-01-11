@@ -20,12 +20,19 @@ public abstract class KtaneModule : MonoBehaviour
     private Component BossModule;
     private object SceneManager;
     
+    private static Dictionary<Type, int> LoggingIDs = new Dictionary<Type, int>();
+    
     private const BindingFlags MainFlags = BindingFlags.Public | BindingFlags.Instance;
 
     /// <summary>
     /// The KMBombInfo object of a module (if present)
     /// </summary>
     protected KMBombInfo BombInfo;
+
+    /// <summary>
+    /// Logging ID of the module
+    /// </summary>
+    protected int ModuleID { get; private set; }
 
     protected virtual void Awake()
     {
@@ -36,6 +43,8 @@ public abstract class KtaneModule : MonoBehaviour
             {
                 {DefaultID, new CoroutineQueue(this)}
             });
+        if (!LoggingIDs.ContainsKey(ModuleType)) LoggingIDs.Add(ModuleType, 0);
+        ModuleID = ++LoggingIDs[ModuleType];
     }
 
     protected virtual void Start()
@@ -47,6 +56,7 @@ public abstract class KtaneModule : MonoBehaviour
         {
             foreach (var queueDict in DefaultCoroutineQueue)
             {
+                LoggingIDs.Clear();
                 foreach (var queue in queueDict.Value) queue.Value.Reset();
             }
             DefaultCoroutineQueue.Clear();
