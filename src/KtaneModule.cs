@@ -22,6 +22,9 @@ public abstract class KtaneModule : MonoBehaviour
     
     private const BindingFlags MainFlags = BindingFlags.Public | BindingFlags.Instance;
 
+    /// <summary>
+    /// The KMBombInfo object of a module (if present)
+    /// </summary>
     protected KMBombInfo BombInfo;
 
     protected virtual void Awake()
@@ -60,7 +63,7 @@ public abstract class KtaneModule : MonoBehaviour
                 null
             );
         
-        if (!Application.isEditor)
+        if (!IsTestHarness)
         {
             Type SceneManagerType = ReflectionHelper.FindType("SceneManager", "Assembly-CSharp");
             SceneManager = SceneManagerType
@@ -106,16 +109,38 @@ public abstract class KtaneModule : MonoBehaviour
     
     #region GameInformation
 
+    /// <summary>
+    /// Will be true if TwitchPlays is active
+    /// </summary>
     protected bool TwitchPlaysActive;
+    
+    /// <summary>
+    /// Will be true if Time Mode is active
+    /// </summary>
     protected bool TimeModeActive;
+    
+    /// <summary>
+    /// Will be true if Zen Mode is active
+    /// </summary>
     protected bool ZenModeActive;
+    
+    /// <summary>
+    /// Will be true if the module is played through the Unity editor
+    /// </summary>
     protected bool IsTestHarness;
     
     #endregion
     
     #region Missioninformation
 
+    /// <summary>
+    /// The internal Mission object of the current mission
+    /// </summary>
     protected object MissionObject;
+    
+    /// <summary>
+    /// The name of the current mission
+    /// </summary>
     protected string MissionName;
     
     #endregion
@@ -125,9 +150,23 @@ public abstract class KtaneModule : MonoBehaviour
     private List<string> OldSolveds = new List<string>();
     private MethodInfo IgnoredMethod;
     
+    /// <summary>
+    /// An array of ignored modules. Updated by GetIgnoredModules()
+    /// </summary>
     protected string[] IgnoredModules = null;
+    
+    /// <summary>
+    /// Gets called when a non-ignored module gets solved. The passed string value is the name of the solved module.
+    /// </summary>
     protected Action<string> OnNewStage = ModuleName => { };
 
+    /// <summary>
+    /// Update the list of ignored modules
+    /// </summary>
+    /// <param name="ModuleName">Name of the module</param>
+    /// <param name="default">Ignored modules if Boss Module Manager isn't active</param>
+    /// <returns>Reference to IgnoredModules</returns>
+    /// <exception cref="ModuleException">There's no KMBossModule attached</exception>
     protected string[] GetIgnoredModules(string ModuleName, string[] @default = null)
     {
         if(BossModule==null) throw new ModuleException("Module is not a boss module. (Please attach a KMBossModule script!)");
@@ -138,6 +177,13 @@ public abstract class KtaneModule : MonoBehaviour
         return IgnoredModules;
     }
 
+    /// <summary>
+    /// Updates the list of ignored modules
+    /// </summary>
+    /// <param name="module">The KMBombModule object of the module</param>
+    /// <param name="default">Ignored modules if Boss Module Manager isn't active</param>
+    /// <returns>Reference to IgnoredModules</returns>
+    /// <exception cref="ModuleException">There's no KMBossModule attached</exception>
     protected string[] GetIgnoredModules(KMBombModule module, string[] @default = null)
     {
         return GetIgnoredModules(module.ModuleDisplayName, @default);
@@ -147,22 +193,42 @@ public abstract class KtaneModule : MonoBehaviour
     #region CoroutineQueue
     private static Dictionary<Type, Dictionary<string, CoroutineQueue>> DefaultCoroutineQueue = new Dictionary<Type, Dictionary<string, CoroutineQueue>>();
 
+    /// <summary>
+    /// Add coroutines to the queue
+    /// </summary>
+    /// <param name="id">The ID of the queue</param>
+    /// <param name="SplitYields">If true, the next part of the coroutine will be added to the end of the queue when the one before ran</param>
+    /// <param name="routines">Array of coroutines to enqueue</param>
     protected void QueueRoutines(string id, bool SplitYields, params IEnumerator[] routines)
     {
         if (!DefaultCoroutineQueue[ModuleType].ContainsKey(id)) DefaultCoroutineQueue[ModuleType].Add(id, new CoroutineQueue(this));
         DefaultCoroutineQueue[ModuleType][id].QueueRoutines(SplitYields, routines);
     }
 
+    /// <summary>
+    /// Add coroutines to the queue
+    /// </summary>
+    /// <param name="routines">Array of coroutines to enqueue</param>
     protected void QueueRoutines(params IEnumerator[] routines)
     {
         QueueRoutines("default", false, routines);
     }
 
+    /// <summary>
+    /// Add coroutines to the queue
+    /// </summary>
+    /// <param name="SplitYields">If true, the next part of the coroutine will be added to the end of the queue when the one before ran</param>
+    /// <param name="routines">Array of coroutines to enqueue</param>
     protected void QueueRoutines(bool SplitYields, params IEnumerator[] routines)
     {
         QueueRoutines("default", SplitYields, routines);
     }
 
+    /// <summary>
+    /// Add coroutines to the queue
+    /// </summary>
+    /// <param name="id">The ID of the queue</param>
+    /// <param name="routines">Array of coroutines to enqueue</param>
     protected void QueueRoutines(string id, params IEnumerator[] routines)
     {
         QueueRoutines(id, false, routines);
@@ -171,6 +237,11 @@ public abstract class KtaneModule : MonoBehaviour
     
     #region TwitchPlays
     private MethodInfo SendMethod = null;
+    
+    /// <summary>
+    /// Send a message to the Twitch chat
+    /// </summary>
+    /// <param name="message">The message to send</param>
     protected void SendTwitchMessage(string message)
     {
         if (SendMethod == null) return;
@@ -178,6 +249,11 @@ public abstract class KtaneModule : MonoBehaviour
         SendMethod.Invoke(null, new object[] {message});
     }
     
+    /// <summary>
+    /// Send a message to the Twitch chat
+    /// </summary>
+    /// <param name="message">Base string</param>
+    /// <param name="args">Format arguments</param>
     protected void SendTwitchMessageFormat(string message, params object[] args) {
         SendTwitchMessage(String.Format(message, args));
     }
