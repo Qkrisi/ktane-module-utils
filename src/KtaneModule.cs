@@ -34,13 +34,14 @@ public abstract class KtaneModule : MonoBehaviour
             ModuleType, 
             new Dictionary<string, CoroutineQueue>()
             {
-                {"default", new CoroutineQueue(this)}
+                {DefaultID, new CoroutineQueue(this)}
             });
     }
 
     protected virtual void Start()
     {
         IsTestHarness = Application.isEditor;
+        TwitchID = -1;
         
         GetComponent<KMGameInfo>().OnStateChange += state =>
         {
@@ -62,7 +63,6 @@ public abstract class KtaneModule : MonoBehaviour
                 new Type[] {typeof(string), typeof(string[])}, 
                 null
             );
-        
         if (!IsTestHarness)
         {
             Type SceneManagerType = ReflectionHelper.FindType("SceneManager", "Assembly-CSharp");
@@ -103,6 +103,7 @@ public abstract class KtaneModule : MonoBehaviour
                 }
             }
         }
+        if (TwitchID == -1) TwitchID = GetTwitchID();
     }
 
     #endregion
@@ -127,7 +128,7 @@ public abstract class KtaneModule : MonoBehaviour
     /// <summary>
     /// Will be true if the module is played through the Unity editor
     /// </summary>
-    protected bool IsTestHarness;
+    protected bool IsTestHarness { get; private set; }
     
     #endregion
     
@@ -136,12 +137,12 @@ public abstract class KtaneModule : MonoBehaviour
     /// <summary>
     /// The internal Mission object of the current mission
     /// </summary>
-    protected object MissionObject;
+    protected object MissionObject { get; private set; }
     
     /// <summary>
     /// The name of the current mission
     /// </summary>
-    protected string MissionName;
+    protected string MissionName { get; private set; }
     
     #endregion
     
@@ -194,6 +195,11 @@ public abstract class KtaneModule : MonoBehaviour
     private static Dictionary<Type, Dictionary<string, CoroutineQueue>> DefaultCoroutineQueue = new Dictionary<Type, Dictionary<string, CoroutineQueue>>();
 
     /// <summary>
+    /// The ID of the default coroutine queue
+    /// </summary>
+    protected const string DefaultID = "default";
+    
+    /// <summary>
     /// Add coroutines to the queue
     /// </summary>
     /// <param name="id">The ID of the queue</param>
@@ -206,22 +212,22 @@ public abstract class KtaneModule : MonoBehaviour
     }
 
     /// <summary>
-    /// Add coroutines to the queue
+    /// Add coroutines to the default queue
     /// </summary>
     /// <param name="routines">Array of coroutines to enqueue</param>
     protected void QueueRoutines(params IEnumerator[] routines)
     {
-        QueueRoutines("default", false, routines);
+        QueueRoutines(DefaultID, false, routines);
     }
 
     /// <summary>
-    /// Add coroutines to the queue
+    /// Add coroutines to the default queue
     /// </summary>
     /// <param name="SplitYields">If true, the next part of the coroutine will be added to the end of the queue when the one before ran</param>
     /// <param name="routines">Array of coroutines to enqueue</param>
     protected void QueueRoutines(bool SplitYields, params IEnumerator[] routines)
     {
-        QueueRoutines("default", SplitYields, routines);
+        QueueRoutines(DefaultID, SplitYields, routines);
     }
 
     /// <summary>
@@ -237,6 +243,50 @@ public abstract class KtaneModule : MonoBehaviour
     
     #region TwitchPlays
     private MethodInfo SendMethod = null;
+    
+    private int GetTwitchID()
+    {
+        if (!IsTestHarness)
+        {
+            Type TwitchGameType = ReflectionHelper.FindType("TwitchGame", "TwitchPlaysAssembly");
+            if (TwitchGameType != null)
+            {
+                object TwitchGame = FindObjectOfType(TwitchGameType);
+                if (TwitchGame != null)
+                {
+                    IEnumerable TPModules = (IEnumerable)TwitchGameType.GetField("Modules", MainFlags).GetValue(TwitchGame);
+                    foreach (object Module in TPModules)
+                    {
+                        Type ModuleType = Module.GetType();
+                        var Behaviour =
+                            (MonoBehaviour) (ModuleType.GetField("BombComponent", MainFlags).GetValue(Module));
+                        if (Behaviour.GetComponent<KtaneModule>() == this)
+                        {
+                            return int.Parse((string) ModuleType.GetProperty("Code", MainFlags)
+                                .GetValue(Module, null));
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            foreach (var component in GetComponentsInChildren<Component>(true))
+            {
+                Type cType = component.GetType();
+                if (cType.ToString() == "TwitchPlaysID")
+                {
+                    return (int) cType.GetField("ModuleID", MainFlags).GetValue(component);
+                }
+            }
+        }
+        return -1;
+    }
+
+    /// <summary>
+    /// ID of the module on TwitchPlays (-1 if TwitchPlays is not active)
+    /// </summary>
+    protected int TwitchID { get; private set; }
     
     /// <summary>
     /// Send a message to the Twitch chat
