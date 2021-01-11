@@ -103,7 +103,7 @@ public abstract class KtaneModule : MonoBehaviour
                 }
             }
         }
-        if (TwitchID == -1) TwitchID = GetTwitchID();
+        if (TwitchID < 1) TwitchID = GetTwitchID();
     }
 
     #endregion
