@@ -34,6 +34,9 @@ public abstract class KtaneModule : MonoBehaviour
     /// </summary>
     protected int ModuleID { get; private set; }
 
+    /// <summary>
+    /// Called on the 0th frame
+    /// </summary>
     protected virtual void Awake()
     {
         ModuleType = GetType();
@@ -47,6 +50,9 @@ public abstract class KtaneModule : MonoBehaviour
         ModuleID = ++LoggingIDs[ModuleType];
     }
 
+    /// <summary>
+    /// Called on the 1st frame
+    /// </summary>
     protected virtual void Start()
     {
         IsTestHarness = Application.isEditor;
@@ -97,6 +103,9 @@ public abstract class KtaneModule : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Called on every frame
+    /// </summary>
     protected virtual void Update()
     {
         if (BombInfo != null)

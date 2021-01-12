@@ -32,17 +32,17 @@
         <WarningLevel>4</WarningLevel>
     </PropertyGroup>
     <ItemGroup>
-        <Reference Include="KMFramework, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
+        <Reference Include="KMFramework">
           <HintPath>external\KMFramework.dll</HintPath>
         </Reference>
         <Reference Include="System" />
         <Reference Include="System.Core" />
         <Reference Include="System.Data" />
         <Reference Include="System.Xml" />
-        <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+        <Reference Include="UnityEngine">
           <HintPath>external\UnityEngine.dll</HintPath>
         </Reference>
-        <Reference Include="UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+        <Reference Include="UnityEngine.CoreModule">
           <HintPath>external\UnityEngine.CoreModule.dll</HintPath>
         </Reference>
     </ItemGroup>
