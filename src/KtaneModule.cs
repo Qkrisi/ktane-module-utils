@@ -272,11 +272,21 @@ public abstract class KtaneModule : MonoBehaviour
         QueueRoutines(id, false, routines);
     }
 
+    /// <summary>
+    /// Add actions to the queue
+    /// </summary>
+    /// <param name="id">The ID of the queue</param>
+    /// <param name="actions">Array of actions to enqueue</param>
+    /// <exception cref="ArgumentException">The specified ID is either null or contains only whitespaces</exception>
     protected void QueueActions(string id, params Action[] actions)
     {
         QueueRoutines(id, actions.Select(ActionToCoroutine).ToArray());
     }
 
+    /// <summary>
+    /// Add actions to the queue
+    /// </summary>
+    /// <param name="actions">Array of actions to enqueue</param>
     protected void QueueActions(params Action[] actions)
     {
         QueueRoutines(actions.Select(ActionToCoroutine).ToArray());
