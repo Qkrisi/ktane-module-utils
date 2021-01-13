@@ -25,16 +25,6 @@ public abstract class KtaneModule : MonoBehaviour
     private const BindingFlags MainFlags = BindingFlags.Public | BindingFlags.Instance;
 
     /// <summary>
-    /// The KMBombInfo object of a module (if present)
-    /// </summary>
-    protected KMBombInfo BombInfo;
-
-    /// <summary>
-    /// Logging ID of the module
-    /// </summary>
-    protected int ModuleID { get; private set; }
-
-    /// <summary>
     /// Called on the 0th frame
     /// </summary>
     protected virtual void Awake()
@@ -127,6 +117,20 @@ public abstract class KtaneModule : MonoBehaviour
 
     #endregion
     
+    #region ModuleInfomation
+    
+    /// <summary>
+    /// The KMBombInfo object of a module (if present)
+    /// </summary>
+    protected KMBombInfo BombInfo { get; private set; }
+
+    /// <summary>
+    /// Logging ID of the module
+    /// </summary>
+    protected int ModuleID { get; private set; }
+    
+    #endregion
+    
     #region GameInformation
 
     /// <summary>
@@ -204,14 +208,20 @@ public abstract class KtaneModule : MonoBehaviour
     /// <param name="default">Ignored modules if Boss Module Manager isn't active</param>
     /// <returns>Reference to IgnoredModules</returns>
     /// <exception cref="ModuleException">There's no KMBossModule attached</exception>
-    protected string[] GetIgnoredModules(KMBombModule module, string[] @default = null)
+    protected string[] GetIgnoredModules(KMBombModule Module, string[] @default = null)
     {
-        return GetIgnoredModules(module.ModuleDisplayName, @default);
+        return GetIgnoredModules(Module.ModuleDisplayName, @default);
     }
     #endregion
     
     #region CoroutineQueue
     private static Dictionary<Type, Dictionary<string, CoroutineQueue>> DefaultCoroutineQueue = new Dictionary<Type, Dictionary<string, CoroutineQueue>>();
+
+    private IEnumerator ActionToCoroutine(Action action)
+    {
+        action();
+        yield break;
+    }
 
     /// <summary>
     /// The ID of the default coroutine queue
@@ -224,8 +234,10 @@ public abstract class KtaneModule : MonoBehaviour
     /// <param name="id">The ID of the queue</param>
     /// <param name="SplitYields">If true, the next part of the coroutine will be added to the end of the queue when the one before ran</param>
     /// <param name="routines">Array of coroutines to enqueue</param>
+    /// <exception cref="ArgumentException">The specified ID is either null or contains only whitespaces</exception>
     protected void QueueRoutines(string id, bool SplitYields, params IEnumerator[] routines)
     {
+        if (String.IsNullOrEmpty(id.Trim())) throw new ArgumentException("Please specify a valid queue id!");
         if (!DefaultCoroutineQueue[ModuleType].ContainsKey(id)) DefaultCoroutineQueue[ModuleType].Add(id, new CoroutineQueue(this));
         DefaultCoroutineQueue[ModuleType][id].QueueRoutines(SplitYields, routines);
     }
@@ -254,9 +266,20 @@ public abstract class KtaneModule : MonoBehaviour
     /// </summary>
     /// <param name="id">The ID of the queue</param>
     /// <param name="routines">Array of coroutines to enqueue</param>
+    /// <exception cref="ArgumentException">The specified ID is either null or contains only whitespaces</exception>
     protected void QueueRoutines(string id, params IEnumerator[] routines)
     {
         QueueRoutines(id, false, routines);
+    }
+
+    protected void QueueActions(string id, params Action[] actions)
+    {
+        QueueRoutines(id, actions.Select(ActionToCoroutine).ToArray());
+    }
+
+    protected void QueueActions(params Action[] actions)
+    {
+        QueueRoutines(actions.Select(ActionToCoroutine).ToArray());
     }
     #endregion
     
