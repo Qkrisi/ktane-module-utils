@@ -4,7 +4,7 @@ This library contains variables and methods that speed up the module developemen
 
 ### Install
 
-Download the latest ModuleUtils.dll from [here](https://github.com/Qkrisi/ktane-module-utils/releases) and put it into `Assets/Plugins/Managed`
+Download the latest KtaneModule.cs from [here](https://github.com/Qkrisi/ktane-module-utils/releases) and put it into a project folder that isn't ignored when building the module (for ex. `Assets`).
 
 ### Use
 
