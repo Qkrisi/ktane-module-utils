@@ -119,7 +119,7 @@ public abstract partial class KtaneModule : MonoBehaviour
                 OldSolveds = solveds;
                 foreach (string module in TempSolveds)
                 {
-                    if (WatchSolves && (IgnoredModules == null || !IgnoredModules.Contains(module))) OnNewStage(module, complete);
+                    if (WatchSolves && OnNewStage!=null && (IgnoredModules == null || !IgnoredModules.Contains(module))) OnNewStage(module, complete);
                 }
             }
 
@@ -151,6 +151,17 @@ public abstract partial class KtaneModule : MonoBehaviour
     /// Logging ID of the module
     /// </summary>
     protected int ModuleID { get; private set; }
+
+    /// <summary>
+    /// The maximum ID of the modules of the same type on the bomb
+    /// </summary>
+    protected int MaxID
+    {
+        get
+        {
+            return LoggingIDs.ContainsKey(ModuleType) ? LoggingIDs[ModuleType] : 0;
+        }
+    }
 
     #endregion
 
