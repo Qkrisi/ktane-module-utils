@@ -110,7 +110,8 @@ public abstract partial class KtaneModule : MonoBehaviour
         if (BombInfo != null)
         {
             var solveds = BombInfo.GetSolvedModuleNames();
-            bool complete = solveds.All(IgnoredModules.Contains);
+            var solvables = GetUnsolvedModuleNames();
+            bool complete = IgnoredModules == null ? solvables.Count<=1 : solvables.All(IgnoredModules.Contains);
             if (solveds.Count > OldSolveds.Count)
             {
                 var TempSolveds = solveds.ToList();
@@ -118,12 +119,12 @@ public abstract partial class KtaneModule : MonoBehaviour
                 OldSolveds = solveds;
                 foreach (string module in TempSolveds)
                 {
-                    if (IgnoredModules == null || !IgnoredModules.Contains(module)) OnNewStage(module, complete);
+                    if (WatchSolves && (IgnoredModules == null || !IgnoredModules.Contains(module))) OnNewStage(module, complete);
                 }
             }
 
         }
-
+        
         if (TwitchID < 1) TwitchID = GetTwitchID();
     }
 
@@ -194,6 +195,32 @@ public abstract partial class KtaneModule : MonoBehaviour
     /// </summary>
     protected string MissionID { get; private set; }
 
+    /// <summary>
+    /// Returns the names of the unsolved modules
+    /// </summary>
+    /// <returns></returns>
+    /// <exception cref="ModuleException">There is no KMBombInfo component attached</exception>
+    protected List<string> GetUnsolvedModuleNames()
+    {
+        if(BombInfo==null) throw new ModuleException("There is no KMBombInfo component attached!");
+        var AllModules = BombInfo.GetSolvableModuleNames();
+        foreach (string module in BombInfo.GetSolvedModuleNames()) AllModules.Remove(module);
+        return AllModules;
+    }
+    
+    /// <summary>
+    /// Returns the IDs of the unsolved modules
+    /// </summary>
+    /// <returns></returns>
+    /// <exception cref="ModuleException">There is no KMBombInfo component attached</exception>
+    protected List<string> GetUnsolvedModuleIDs()
+    {
+        if(BombInfo==null) throw new ModuleException("There is no KMBombInfo component attached!");
+        var AllModules = BombInfo.GetSolvableModuleIDs();
+        foreach (string module in BombInfo.GetSolvedModuleIDs()) AllModules.Remove(module);
+        return AllModules;
+    }
+
     #endregion
 
     #region BossModules
@@ -210,6 +237,11 @@ public abstract partial class KtaneModule : MonoBehaviour
     /// Gets called when a non-ignored module gets solved. The passed string value is the name of the solved module.
     /// </summary>
     protected Action<string, bool> OnNewStage = (ModuleName, Ready) => { };
+
+    /// <summary>
+    /// If false, the OnNewStage delegate won't be triggered
+    /// </summary>
+    protected bool WatchSolves = true;
 
     /// <summary>
     /// Update the list of ignored modules
