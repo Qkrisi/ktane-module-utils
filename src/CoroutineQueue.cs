@@ -61,7 +61,7 @@ public abstract partial class KtaneModule
             instance.CallNext();
         }
 
-        internal CoroutineEntry(IEnumerator routine, bool Split, CoroutineQueue instance)
+        public CoroutineEntry(IEnumerator routine, bool Split, CoroutineQueue instance)
         {
             Routine = PatchRoutine(routine, Split, instance);
         }
