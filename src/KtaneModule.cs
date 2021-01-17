@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(KMGameInfo))]
-public abstract class KtaneModule : MonoBehaviour
+public abstract partial class KtaneModule : MonoBehaviour
 {
     #region General
     protected class ModuleException : Exception
@@ -47,6 +47,7 @@ public abstract class KtaneModule : MonoBehaviour
     {
         IsTestHarness = Application.isEditor;
         TwitchID = -1;
+        TwitchGameType = ReflectionHelper.FindType("TwitchGame", "TwitchPlaysAssembly");
         
         GetComponent<KMGameInfo>().OnStateChange += state =>
         {
@@ -295,12 +296,12 @@ public abstract class KtaneModule : MonoBehaviour
     
     #region TwitchPlays
     private MethodInfo SendMethod = null;
+    private Type TwitchGameType = null;
     
     private int GetTwitchID()
     {
         if (!IsTestHarness)
         {
-            Type TwitchGameType = ReflectionHelper.FindType("TwitchGame", "TwitchPlaysAssembly");
             if (TwitchGameType != null)
             {
                 object TwitchGame = FindObjectOfType(TwitchGameType);
