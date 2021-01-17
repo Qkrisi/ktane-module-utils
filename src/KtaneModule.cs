@@ -196,9 +196,9 @@ public abstract partial class KtaneModule : MonoBehaviour
     protected string MissionID { get; private set; }
 
     /// <summary>
-    /// Returns the names of the unsolved modules
+    /// Gets the names of the unsolved modules
     /// </summary>
-    /// <returns></returns>
+    /// <returns>The list of unsolved module names</returns>
     /// <exception cref="ModuleException">There is no KMBombInfo component attached</exception>
     protected List<string> GetUnsolvedModuleNames()
     {
@@ -209,9 +209,9 @@ public abstract partial class KtaneModule : MonoBehaviour
     }
     
     /// <summary>
-    /// Returns the IDs of the unsolved modules
+    /// Gets the IDs of the unsolved modules
     /// </summary>
-    /// <returns></returns>
+    /// <returns>The list of unsolved module IDs</returns>
     /// <exception cref="ModuleException">There is no KMBombInfo component attached</exception>
     protected List<string> GetUnsolvedModuleIDs()
     {
