@@ -40,6 +40,7 @@ public abstract partial class KtaneModule : MonoBehaviour
                 });
         if (!LoggingIDs.ContainsKey(ModuleType)) LoggingIDs.Add(ModuleType, 0);
         ModuleID = ++LoggingIDs[ModuleType];
+        TwitchPlaysScores = new Dictionary<string, float>();
     }
 
     /// <summary>
@@ -99,6 +100,14 @@ public abstract partial class KtaneModule : MonoBehaviour
                     Type.DefaultBinder,
                     new Type[] {typeof(string)},
                     null);
+        }
+        try
+        {
+            FetchTweaksScores();
+        }
+        catch (Exception ex)
+        {
+            Debug.LogFormat("[ModuleUtils] Failed to fetch scores: {0}", ex);
         }
     }
 
@@ -358,6 +367,53 @@ public abstract partial class KtaneModule : MonoBehaviour
                             (MonoBehaviour) (ModuleType.GetField("BombComponent", MainFlags).GetValue(Module));
                         if (Behaviour.GetComponent<KtaneModule>() == this)
                         {
+                            if (TwitchPlaysScores.Count == 0)
+                            {
+                                try
+                                {
+                                    IEnumerable ScoreMethods =
+                                        (IEnumerable) ModuleType.GetField("ScoreMethods", MainFlags).GetValue(Module);
+                                    foreach (object method in ScoreMethods)
+                                    {
+                                        Type MethodType = method.GetType();
+                                        string MethodTypeName = MethodType.Name;
+                                        if (!TwitchPlaysScores.ContainsKey(MethodTypeName))
+                                            TwitchPlaysScores.Add(
+                                                MethodTypeName,
+                                                (float) MethodType.BaseType
+                                                    .GetField("Points", MainFlags)
+                                                    .GetValue(method)
+                                            );
+                                    }
+                                }
+                                catch (NullReferenceException)    //Old TP version
+                                {
+                                    Debug.Log("[ModuleUtils] Failed to fetch TP score, trying with old TP version");
+                                    var SolverInfo = ModuleType.GetProperty("Solver", MainFlags);
+                                    if (SolverInfo != null)
+                                    {
+                                        var Solver = SolverInfo.GetValue(Module, null);
+                                        var ModInfo = Solver.GetType().GetField("ModInfo", MainFlags).GetValue(Solver);
+                                        if (ModInfo != null)
+                                        {
+                                            Type ModInfoType = ModInfo.GetType();
+                                            bool IsDynamic = (bool)ModInfoType.GetField("moduleScoreIsDynamic", MainFlags)
+                                                .GetValue(ModInfo);
+                                            if(!IsDynamic)
+                                                TwitchPlaysScores.Add(
+                                                    "BaseScore",
+                                                    (float) ModInfoType.GetField("moduleScore", MainFlags)
+                                                        .GetValue(ModInfo)
+                                                    );
+                                        }
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    Debug.LogFormat("[ModuleUtils] Failed to fetch TP scores: {0}", ex);
+                                }
+                            }
+
                             return int.Parse((string) ModuleType.GetProperty("Code", MainFlags)
                                 .GetValue(Module, null));
                         }
@@ -402,6 +458,67 @@ public abstract partial class KtaneModule : MonoBehaviour
     /// <param name="args">Format arguments</param>
     protected void SendTwitchMessageFormat(string message, params object[] args) {
         SendTwitchMessage(String.Format(message, args));
+    }
+    #endregion
+    
+    #region ModuleScores
+
+    /// <summary>
+    /// Base score on Tweaks
+    /// </summary>
+    protected double TweaksScore { get; private set; }
+    
+    /// <summary>
+    /// Points Per Module on Tweaks
+    /// </summary>
+    protected double TweaksPPM { get; private set; }
+    
+    /// <summary>
+    /// Scores on Twitch Plays (key = category)
+    /// </summary>
+    protected Dictionary<string, float> TwitchPlaysScores { get; private set; }
+
+    /// <summary>
+    /// Base score on Twitch Plays
+    /// </summary>
+    protected float TwitchPlaysScore
+    {
+        get
+        {
+            return TwitchPlaysScores.ContainsKey("BaseScore") ? TwitchPlaysScores["BaseScore"] : -1f;
+        }
+    }
+    
+    /// <summary>
+    /// Points Per Module on Twitch Plays
+    /// </summary>
+    protected float TwitchPlaysPPM
+    {
+        get
+        {
+            return TwitchPlaysScores.ContainsKey("PerModule") ? TwitchPlaysScores["PerModule"] : -1f;
+        }
+    }
+    
+    
+    private void FetchTweaksScores()
+    {
+        TweaksScore = -1;
+        TweaksPPM = -1;
+        Component bombComponent = GetComponent("BombComponent");
+        if (bombComponent == null) return;
+        Type ModesType = ReflectionHelper.FindType("Modes", "TweaksAssembly");
+        if (ModesType != null)
+        {
+            string ModuleID = (string)ModesType.GetMethod("GetModuleID", MainFlags | BindingFlags.Static).Invoke(null, new object[] {bombComponent});
+            Dictionary<string, double> DefaultComponentValues =
+                (Dictionary<string, double>)ModesType.GetField("DefaultComponentValues", MainFlags | BindingFlags.Static).GetValue(null);
+            if (DefaultComponentValues.ContainsKey(ModuleID)) TweaksScore = DefaultComponentValues[ModuleID];
+            Dictionary<string, double> PPMScores =
+                (Dictionary<string, double>)ModesType.GetField("DefaultTotalModulesMultiplier", MainFlags | BindingFlags.Static).GetValue(null);
+            if (PPMScores.ContainsKey(ModuleID)) TweaksPPM = PPMScores[ModuleID];
+        }
+        
     }
     #endregion
 }
