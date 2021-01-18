@@ -1,6 +1,6 @@
 # Keep Talking and Nobody Explodes module creation utilities
 
-This library contains variables and methods that speed up the module developement process, such as a delegate for new stages, coroutine queue, etc.
+This library contains variables and methods that speed up the module developement process, such as a delegate for new stages, coroutine queue, and much more!
 
 ### Install
 
