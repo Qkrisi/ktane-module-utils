@@ -67,6 +67,13 @@ public abstract partial class KtaneModule : MonoBehaviour
         BombModule = GetComponent<KMBombModule>();
         NeedyModule = GetComponent<KMNeedyModule>();
         BossModule = GetComponent("KMBossModule");
+        Component ColorblindComponent = GetComponent("KMColorblindMode");
+        if (ColorblindComponent != null)
+        {
+            var ColorblindEnabled = ColorblindComponent.GetType().GetProperty("ColorblindModeActive", MainFlags);
+            if (ColorblindEnabled != null)
+                ColorblindMode = (bool) ColorblindEnabled.GetValue(ColorblindComponent, null);
+        }
         if (BossModule != null)
             IgnoredMethod = BossModule
                 .GetType()
@@ -195,6 +202,11 @@ public abstract partial class KtaneModule : MonoBehaviour
     /// Will be true if the module is played through the Unity editor
     /// </summary>
     protected bool IsTestHarness { get; private set; }
+    
+    /// <summary>
+    /// Will be true if colorblind mode is enabled
+    /// </summary>
+    protected bool ColorblindMode { get; private set; }
 
     #endregion
 
