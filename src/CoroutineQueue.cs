@@ -3,6 +3,16 @@ using System.Collections.Generic;
 
 public abstract partial class KtaneModule
 {
+    protected class SkipRequeue
+    {
+        public readonly object Value;
+        
+        public SkipRequeue(object value)
+        {
+            Value = value;
+        }
+    }    
+
     private class CoroutineQueue
     {
         private Queue<CoroutineEntry> Entries = new Queue<CoroutineEntry>();
@@ -47,12 +57,20 @@ public abstract partial class KtaneModule
         private IEnumerator PatchRoutine(IEnumerator routine, bool Split, CoroutineQueue instance)
         {
             if (!Split) yield return routine;
-            else if (routine.MoveNext())
+            else
             {
-                yield return routine.Current;
-                instance.QueueRoutine(new CoroutineEntry(routine, true, instance, Module), true);
+                while (routine.MoveNext())
+                {
+                    var CurrentOBJ = routine.Current;
+                    if (CurrentOBJ.GetType() == typeof(SkipRequeue)) yield return ((SkipRequeue)CurrentOBJ).Value;
+                    else
+                    {
+                        yield return CurrentOBJ;
+                        instance.QueueRoutine(new CoroutineEntry(routine, true, instance, Module), true);
+                        break;
+                    }
+                }
             }
-
             instance.CoroutineRunning = false;
             instance.CallNext();
         }
