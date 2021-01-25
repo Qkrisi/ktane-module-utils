@@ -62,7 +62,7 @@ public abstract partial class KtaneModule
                 while (routine.MoveNext())
                 {
                     var CurrentOBJ = routine.Current;
-                    if (CurrentOBJ.GetType() == typeof(SkipRequeue)) yield return ((SkipRequeue)CurrentOBJ).Value;
+                    if (CurrentOBJ!=null && CurrentOBJ.GetType() == typeof(SkipRequeue)) yield return ((SkipRequeue)CurrentOBJ).Value;
                     else
                     {
                         yield return CurrentOBJ;
